@@ -1,17 +1,22 @@
 document.addEventListener('DOMContentLoaded', function() {
     const imageUpload = document.getElementById('imageUpload');
-    const imagePreview = document.getElementById('imagePreview');
-    const removeImageBtn = document.querySelector('.btn-remove-image');
+    const mainImageContainer = document.getElementById('mainImageContainer');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    const additionalImagesContainer = document.getElementById('additionalImagesContainer');
+    const additionalImages = document.getElementById('additionalImages');
+    const addMoreImagesBtn = document.getElementById('addMoreImagesBtn');
     const form = document.getElementById('trilhaForm');
     const locationInput = document.getElementById('trilhaLocation');
     const mapView = document.getElementById('mapView');
     const mapPlaceholder = document.getElementById('mapPlaceholder');
     
-    // Drag and drop functionality
-    const uploadContainer = document.querySelector('.image-upload-container');
+    // Array para armazenar as imagens
+    let mainImage = null;
+    let additionalImagesList = [];
     
+    // Drag and drop functionality
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        uploadContainer.addEventListener(eventName, preventDefaults, false);
+        mainImageContainer.addEventListener(eventName, preventDefaults, false);
     });
     
     function preventDefaults(e) {
@@ -20,81 +25,167 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     ['dragenter', 'dragover'].forEach(eventName => {
-        uploadContainer.addEventListener(eventName, highlight, false);
+        mainImageContainer.addEventListener(eventName, highlight, false);
     });
     
     ['dragleave', 'drop'].forEach(eventName => {
-        uploadContainer.addEventListener(eventName, unhighlight, false);
+        mainImageContainer.addEventListener(eventName, unhighlight, false);
     });
     
     function highlight() {
-        uploadContainer.classList.add('highlight');
+        mainImageContainer.classList.add('highlight');
     }
     
     function unhighlight() {
-        uploadContainer.classList.remove('highlight');
+        mainImageContainer.classList.remove('highlight');
     }
     
-    uploadContainer.addEventListener('drop', handleDrop, false);
+    mainImageContainer.addEventListener('drop', handleDrop, false);
     
     function handleDrop(e) {
         const dt = e.dataTransfer;
         const files = dt.files;
-        imageUpload.files = files;
-        handleFiles(files);
+        if (files.length > 0) {
+            handleMainImage(files[0]);
+        }
     }
     
     // Handle file selection
     imageUpload.addEventListener('change', function() {
-        handleFiles(this.files);
+        if (this.files.length > 0) {
+            handleMainImage(this.files[0]);
+        }
     });
     
-    function handleFiles(files) {
-    if (files.length > 0) {
-        const file = files[0];
+    function handleMainImage(file) {
         if (file.type.match('image.*')) {
             const reader = new FileReader();
             
             reader.onload = function(e) {
-                // Criar elemento de imagem
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.alt = "Imagem da trilha";
-                img.classList.add('img-fluid');
+                // Se já existe uma imagem principal, movê-la para adicionais
+                if (mainImage) {
+                    moveMainImageToAdditional();
+                }
                 
-                // Esconder o placeholder
-                const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-                uploadPlaceholder.classList.add('d-none');
+                // Definir nova imagem principal
+                mainImage = {
+                    file: file,
+                    dataUrl: e.target.result
+                };
                 
-                // Adicionar a imagem ao container
-                const uploadContainer = document.querySelector('.image-upload-container');
-                uploadContainer.appendChild(img);
-                uploadContainer.classList.add('has-image');
+                // Atualizar a visualização
+                updateMainImagePreview();
                 
-                // Mostrar botão de remover
-                imagePreview.classList.remove('d-none');
+                // Mostrar botão para adicionar mais imagens
+                addMoreImagesBtn.classList.remove('d-none');
             }
             
             reader.readAsDataURL(file);
         }
     }
-}
     
-    // Remove image functionality
-    removeImageBtn.addEventListener('click', function() {
-        const uploadContainer = document.querySelector('.image-upload-container');
-        const img = uploadContainer.querySelector('img');
-        
-        if (img) {
-            img.remove();
+    function moveMainImageToAdditional() {
+        if (mainImage) {
+            additionalImagesList.unshift(mainImage);
+            mainImage = null;
+            updateAdditionalImagesPreview();
         }
+    }
+    
+    function updateMainImagePreview() {
+        // Limpar o container
+        mainImageContainer.innerHTML = '';
         
-        uploadContainer.classList.remove('has-image');
-        const uploadPlaceholder = document.querySelector('.image-upload-placeholder');
-        uploadPlaceholder.classList.remove('d-none');
+        // Criar elemento de preview
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'image-preview';
         
-        imagePreview.classList.add('d-none');
-        imageUpload.value = '';
+        const img = document.createElement('img');
+        img.src = mainImage.dataUrl;
+        img.alt = "Imagem principal da trilha";
+        
+        const changeBtn = document.createElement('button');
+        changeBtn.type = 'button';
+        changeBtn.className = 'btn-change-image';
+        changeBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Alterar';
+        changeBtn.onclick = () => imageUpload.click();
+        
+        previewDiv.appendChild(img);
+        previewDiv.appendChild(changeBtn);
+        mainImageContainer.appendChild(previewDiv);
+    }
+    
+    function updateAdditionalImagesPreview() {
+        // Limpar o container
+        additionalImages.innerHTML = '';
+        
+        // Adicionar cada imagem adicional
+        additionalImagesList.forEach((image, index) => {
+            const imageItem = document.createElement('div');
+            imageItem.className = 'additional-image-item';
+            
+            const img = document.createElement('img');
+            img.src = image.dataUrl;
+            img.alt = "Imagem adicional da trilha";
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn-remove-image';
+            removeBtn.innerHTML = '<i class="bi bi-x-circle"></i>';
+            removeBtn.setAttribute('aria-label', 'Remover imagem');
+            removeBtn.onclick = () => removeAdditionalImage(index);
+            
+            imageItem.appendChild(img);
+            imageItem.appendChild(removeBtn);
+            additionalImages.appendChild(imageItem);
+        });
+        
+        // Mostrar/ocultar container de imagens adicionais
+        if (additionalImagesList.length > 0) {
+            additionalImagesContainer.classList.remove('d-none');
+        } else {
+            additionalImagesContainer.classList.add('d-none');
+        }
+    }
+    
+    function removeAdditionalImage(index) {
+        // Remover a imagem do array
+        additionalImagesList.splice(index, 1);
+        
+        // Atualizar a visualização
+        updateAdditionalImagesPreview();
+    }
+    
+    // Botão para adicionar mais imagens
+    addMoreImagesBtn.addEventListener('click', function() {
+        // Criar um input file temporário
+        const tempInput = document.createElement('input');
+        tempInput.type = 'file';
+        tempInput.accept = 'image/*';
+        
+        tempInput.onchange = function() {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                if (file.type.match('image.*')) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        // Adicionar à lista de imagens adicionais
+                        additionalImagesList.push({
+                            file: file,
+                            dataUrl: e.target.result
+                        });
+                        
+                        // Atualizar a visualização
+                        updateAdditionalImagesPreview();
+                    }
+                    
+                    reader.readAsDataURL(file);
+                }
+            }
+        };
+        
+        tempInput.click();
     });
     
     // Mapa functionality - atualização do mapa quando o link é inserido
@@ -193,6 +284,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Validar se pelo menos uma imagem foi selecionada
+        if (!mainImage) {
+            alert('Por favor, adicione pelo menos uma imagem da trilha.');
+            return;
+        }
+        
         // Basic validation
         const requiredFields = form.querySelectorAll('[required]');
         let valid = true;
@@ -207,19 +304,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         if (valid) {
-            // Here you would typically send the data to a server
+            // Aqui você normalmente enviaria os dados para um servidor
+            // Incluindo a imagem principal e as adicionais
+            const allImages = [mainImage, ...additionalImagesList];
+            console.log('Imagens a serem enviadas:', allImages.length);
+            
             alert('Trilha publicada com sucesso!');
             form.reset();
-            imagePreview.classList.add('d-none');
-            if (imagePreview.querySelector('img')) {
-                imagePreview.querySelector('img').remove();
-            }
+            resetImages();
             // Resetar o mapa também
             resetMapView();
         } else {
             alert('Por favor, preencha todos os campos obrigatórios.');
         }
     });
+    
+    function resetImages() {
+        mainImage = null;
+        additionalImagesList = [];
+        mainImageContainer.innerHTML = '';
+        mainImageContainer.appendChild(uploadPlaceholder);
+        additionalImagesContainer.classList.add('d-none');
+        additionalImages.innerHTML = '';
+        addMoreImagesBtn.classList.add('d-none');
+    }
     
     // Remove validation styles when user starts typing
     const inputs = form.querySelectorAll('input, textarea, select');

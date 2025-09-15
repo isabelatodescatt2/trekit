@@ -26,19 +26,26 @@
             <div class="row justify-content-between">
                 <!-- Coluna da Imagem + Maps (Esquerda) -->
                 <div class="col-lg-6 mb-4">
-                    <div class="image-upload-container">
+                    <div class="image-upload-container" id="mainImageContainer">
                         <input type="file" id="imageUpload" accept="image/*" class="d-none">
                         <label for="imageUpload" class="image-upload-label">
                             <div class="image-upload-placeholder" id="uploadPlaceholder">
                                 <i class="bi bi-cloud-arrow-up"></i>
-                                <p>Arraste ou clique para adicionar uma foto</p>
+                                <p>Adicione a primeira foto da trilha</p>
                             </div>
                         </label>
                     </div>
-                    <div id="imagePreview" class="image-preview mt-3 d-none">
-                        <img src="" alt="Preview" class="img-thumbnail">
-                        <button type="button" class="btn-remove-image" aria-label="Remover imagem">
-                            <i class="bi bi-x-circle"></i>
+                    
+                    <!-- Container para miniaturas das imagens adicionais -->
+                    <div id="additionalImagesContainer" class="additional-images-container mt-3 d-none">
+                        <p class="mb-2">Fotos adicionais:</p>
+                        <div class="d-flex flex-wrap gap-2" id="additionalImages"></div>
+                    </div>
+                    
+                    <!-- Botão para adicionar mais imagens -->
+                    <div class="text-center mt-3">
+                        <button type="button" id="addMoreImagesBtn" class="btn btn-outline-primary d-none">
+                            <i class="bi bi-plus-circle"></i> Adicionar mais fotos
                         </button>
                     </div>
                     

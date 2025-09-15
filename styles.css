@@ -1,4 +1,4 @@
-/* fotnes */
+/* fontes */
 @font-face {
     font-family: 'Vremena Grotesk';
     src: url('vremenagrotesk.ttf') format('truetype');
@@ -155,6 +155,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 
 .image-upload-container:hover {
@@ -182,51 +183,72 @@ body {
 
 .image-preview {
     position: relative;
-    display: inline-block;
+    width: 100%;
+    height: 100%;
 }
 
 .image-preview img {
-    max-width: 100%;
-    max-height: 15rem;
-    border-radius: 1.5rem;
-}
-
-.image-upload-container.has-image {
-    border: none;
-    padding: 0;
-    background-color: transparent;
-}
-
-.image-upload-container.has-image .image-upload-placeholder {
-    display: none;
-}
-
-.image-upload-container.has-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     border-radius: 1.5rem;
 }
 
-.image-upload-container.highlight {
-    border-color: var(--secondary-color);
-    background-color: rgba(47, 172, 102, 0.1);
+.btn-change-image {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--secondary-color);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-change-image:hover {
+    background: white;
+    color: var(--primary-color);
+}
+
+/* Container para imagens adicionais */
+.additional-images-container {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+.additional-image-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 0.8rem;
+    overflow: hidden;
+}
+
+.additional-image-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .btn-remove-image {
     position: absolute;
-    top: -0.5rem;
-    right: -0.5rem;
+    top: -8px;
+    right: -8px;
     background: white;
     border: none;
     border-radius: 50%;
-    width: 2rem;
-    height: 2rem;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     color: #dc3545;
+    font-size: 16px;
 }
 
 .map-container {
@@ -277,6 +299,32 @@ body {
     transition: background-color 0.3s ease;
 }
 
+.btn-add-more {
+    background-color: #2FAC66; /* Verde da TREKIT */
+    color: white;
+    border: 2px solid #2FAC66;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-add-more:hover {
+    background-color: #248c51; /* Verde mais escuro */
+    border-color: #248c51;
+    color: white;
+}
+
+.btn-outline-primary {
+    color: #2FAC66;
+    border-color: #2FAC66;
+}
+
+.btn-outline-primary:hover {
+    background-color: #2FAC66;
+    border-color: #2FAC66;
+    color: white;
+}
+
 .btn-publish:hover {
     background-color: var(--primary-color);
 }
@@ -318,6 +366,11 @@ body {
     .navbar-brand.ms-auto {
         margin: 0 auto !important;
     }
+    
+    .additional-image-item {
+        width: 80px;
+        height: 80px;
+    }
 }
 
 @media (max-width: 576px) {
@@ -346,5 +399,17 @@ body {
     
     .form-control, .form-select {
         padding: 0.6rem;
+    }
+    
+    .additional-image-item {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .btn-change-image {
+        bottom: 10px;
+        right: 10px;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
     }
 }
