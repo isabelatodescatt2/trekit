@@ -14,23 +14,30 @@ document.addEventListener('DOMContentLoaded', function() {
     let mainImage = null;
     let additionalImagesList = [];
     
-    // Drag and drop functionality
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        mainImageContainer.addEventListener(eventName, preventDefaults, false);
-    });
+    // Inicializar eventos de drag and drop
+    function initDragAndDrop() {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            mainImageContainer.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            mainImageContainer.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            mainImageContainer.addEventListener(eventName, unhighlight, false);
+        });
+        
+        mainImageContainer.addEventListener('drop', handleDrop, false);
+    }
+    
+    // CORREÇÃO: Remover a inicialização duplicada de eventos de clique
+    // O evento já está sendo tratado pelo label com for="imageUpload"
     
     function preventDefaults(e) {
         e.preventDefault();
         e.stopPropagation();
     }
-    
-    ['dragenter', 'dragover'].forEach(eventName => {
-        mainImageContainer.addEventListener(eventName, highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        mainImageContainer.addEventListener(eventName, unhighlight, false);
-    });
     
     function highlight() {
         mainImageContainer.classList.add('highlight');
@@ -39,8 +46,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function unhighlight() {
         mainImageContainer.classList.remove('highlight');
     }
-    
-    mainImageContainer.addEventListener('drop', handleDrop, false);
     
     function handleDrop(e) {
         const dt = e.dataTransfer;
@@ -104,15 +109,62 @@ document.addEventListener('DOMContentLoaded', function() {
         img.src = mainImage.dataUrl;
         img.alt = "Imagem principal da trilha";
         
-        const changeBtn = document.createElement('button');
-        changeBtn.type = 'button';
-        changeBtn.className = 'btn-change-image';
-        changeBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Alterar';
-        changeBtn.onclick = () => imageUpload.click();
+        // Botão para remover a imagem
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn-remove-main-image';
+        removeBtn.innerHTML = '<i class="bi bi-x-circle"></i> Remover';
+        removeBtn.onclick = removeMainImage;
         
         previewDiv.appendChild(img);
-        previewDiv.appendChild(changeBtn);
+        previewDiv.appendChild(removeBtn);
         mainImageContainer.appendChild(previewDiv);
+    }
+    
+    function removeMainImage() {
+        // Se houver imagens adicionais, mover a primeira para principal
+        if (additionalImagesList.length > 0) {
+            mainImage = additionalImagesList.shift();
+            updateMainImagePreview();
+            updateAdditionalImagesPreview();
+        } else {
+            // Se não houver imagens adicionais, resetar para o placeholder
+            mainImage = null;
+            resetMainImageContainer();
+            addMoreImagesBtn.classList.add('d-none');
+        }
+    }
+    
+    function resetMainImageContainer() {
+        mainImageContainer.innerHTML = '';
+        
+        // Recriar o input file e label
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.id = 'imageUpload';
+        input.accept = 'image/*';
+        input.className = 'd-none';
+        
+        const label = document.createElement('label');
+        label.htmlFor = 'imageUpload';
+        label.className = 'image-upload-label';
+        
+        // Clonar o placeholder original
+        const placeholderClone = uploadPlaceholder.cloneNode(true);
+        label.appendChild(placeholderClone);
+        
+        mainImageContainer.appendChild(input);
+        mainImageContainer.appendChild(label);
+        
+        // Re-atachar o event listener
+        input.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                handleMainImage(this.files[0]);
+            }
+        });
+        
+        // Re-inicializar eventos de drag and drop
+        initDragAndDrop();
     }
     
     function updateAdditionalImagesPreview() {
@@ -122,18 +174,26 @@ document.addEventListener('DOMContentLoaded', function() {
         // Adicionar cada imagem adicional
         additionalImagesList.forEach((image, index) => {
             const imageItem = document.createElement('div');
-            imageItem.className = 'additional-image-item';
+            imageItem.className = 'additional-image-item position-relative';
             
             const img = document.createElement('img');
             img.src = image.dataUrl;
             img.alt = "Imagem adicional da trilha";
+            img.className = 'w-100 h-100';
             
+            // Botão para remover imagem individual
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
-            removeBtn.className = 'btn-remove-image';
-            removeBtn.innerHTML = '<i class="bi bi-x-circle"></i>';
-            removeBtn.setAttribute('aria-label', 'Remover imagem');
-            removeBtn.onclick = () => removeAdditionalImage(index);
+            removeBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0 m-1';
+            removeBtn.innerHTML = '<i class="bi bi-x"></i>';
+            removeBtn.style.width = '24px';
+            removeBtn.style.height = '24px';
+            removeBtn.style.padding = '0';
+            removeBtn.style.borderRadius = '50%';
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeAdditionalImage(index);
+            };
             
             imageItem.appendChild(img);
             imageItem.appendChild(removeBtn);
@@ -162,26 +222,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const tempInput = document.createElement('input');
         tempInput.type = 'file';
         tempInput.accept = 'image/*';
+        tempInput.multiple = true;
         
         tempInput.onchange = function() {
             if (this.files.length > 0) {
-                const file = this.files[0];
-                if (file.type.match('image.*')) {
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        // Adicionar à lista de imagens adicionais
-                        additionalImagesList.push({
-                            file: file,
-                            dataUrl: e.target.result
-                        });
+                Array.from(this.files).forEach(file => {
+                    if (file.type.match('image.*')) {
+                        const reader = new FileReader();
                         
-                        // Atualizar a visualização
-                        updateAdditionalImagesPreview();
+                        reader.onload = function(e) {
+                            // Adicionar à lista de imagens adicionais
+                            additionalImagesList.push({
+                                file: file,
+                                dataUrl: e.target.result
+                            });
+                            
+                            // Atualizar a visualização
+                            updateAdditionalImagesPreview();
+                        }
+                        
+                        reader.readAsDataURL(file);
                     }
-                    
-                    reader.readAsDataURL(file);
-                }
+                });
             }
         };
         
@@ -322,8 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetImages() {
         mainImage = null;
         additionalImagesList = [];
-        mainImageContainer.innerHTML = '';
-        mainImageContainer.appendChild(uploadPlaceholder);
+        resetMainImageContainer();
         additionalImagesContainer.classList.add('d-none');
         additionalImages.innerHTML = '';
         addMoreImagesBtn.classList.add('d-none');
@@ -338,4 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Inicializar eventos
+    initDragAndDrop();
 });
